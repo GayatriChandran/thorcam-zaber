@@ -10,7 +10,7 @@ Gayatri 09/2024
 from zaber_motion import Units
 from zaber_motion.ascii import Connection
 
-with Connection.open_serial_port("COM4") as connection:
+with Connection.open_serial_port("COM6") as connection:
     connection.enable_alerts()
 
     device_list = connection.detect_devices()
@@ -23,7 +23,7 @@ with Connection.open_serial_port("COM4") as connection:
     #   axis.home()
 
     # Move to 10mm
-    axis.move_absolute(2.6, Units.LENGTH_MILLIMETRES)
+    axis.move_absolute(2.5, Units.LENGTH_MILLIMETRES)
 
     # Move by an additional 5mm
     # axis.move_relative(0.5, Units.LENGTH_MILLIMETRES)
