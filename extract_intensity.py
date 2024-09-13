@@ -8,21 +8,123 @@ Gayatri 09/2024
 """
 
 import numpy as np
+import pandas as pd
+from skimage.filters import threshold_otsu
 import matplotlib.pyplot as plt
-import tifffile as tf
+from scipy import ndimage as ndi
+from skimage import img_as_float
+from skimage.feature import peak_local_max
+from skimage import util, filters, color
+from skimage.segmentation import watershed
+import skimage as ski
+from skimage.morphology import erosion, dilation, opening, closing
+from skimage import data, restoration, util
+
+def visualize(img, mask):
+    fig, ax = plt.subplots(ncols=2, figsize=(10, 5))
+    ax[0].imshow(img)
+    ax[0].set_title('Original')
+    ax[0].set_axis_off()
+    ax[1].imshow(mask)
+    ax[1].set_title('Dilated mask')
+    ax[1].set_axis_off()
+    plt.show()
+
+def doSomething(img):
+    threshold1 = threshold_otsu(img)
+    print('Otsu threshold : ', threshold1)
+    thresh = 45
+    binary = img > thresh
+    dil_mask = multi_dil(binary,2)
+    ero_mask = multi_ero(dil_mask,1)
+    opened = opening(ero_mask)
+    img_masked = np.ma.masked_array(img, ~opened)
+    # visualize(img, img_masked)
+    return img_masked, thresh
+
+def doSomethingElse(img):
+    im = img
+    image_max = ndi.maximum_filter(im, size=10, mode='constant')
+    coordinates = peak_local_max(image_max, min_distance=50, threshold_abs = 30, num_peaks = 1)
+
+    # fig, axes = plt.subplots(1, 3, figsize=(8, 3), sharex=True, sharey=True)
+    # ax = axes.ravel()
+    # ax[0].imshow(im, cmap=plt.cm.gray)
+    # ax[0].axis('off')
+    # ax[0].set_title('Original')
+
+    # ax[1].imshow(image_max, cmap=plt.cm.gray)
+    # ax[1].axis('off')
+    # ax[1].set_title('Maximum filter')
+
+    # ax[2].imshow(im, cmap=plt.cm.gray)
+    # ax[2].autoscale(False)
+    # ax[2].plot(coordinates[:, 1], coordinates[:, 0], 'r.')
+    # ax[2].axis('off')
+    # ax[2].set_title('Peak local max')
+
+    # fig.tight_layout()
+
+    # plt.show()
+
+    doWatershed(img, coordinates)
+
+def doWatershed(img, seeds):
+    
+    distance = ndi.distance_transform_edt(img)
+
+    local_max_coords = ski.feature.peak_local_max(distance, min_distance=500, exclude_border=False)
+    local_max_mask = np.zeros(distance.shape, dtype=bool)
+    local_max_mask[tuple(local_max_coords.T)] = True
+    markers = ski.measure.label(local_max_mask)
+
+    segmented_img = ski.segmentation.watershed(-distance, markers, mask=img)
+
+    fig, ax = plt.subplots(ncols=2, figsize=(10, 5))
+    ax[0].imshow(img, cmap='gray')
+    ax[0].set_title('Overlapping nuclei')
+    ax[0].set_axis_off()
+    ax[1].imshow(ski.color.label2rgb(segmented_img, bg_label=0))
+    ax[1].set_title('Segmented nuclei')
+    ax[1].set_axis_off()
+    plt.show()
+
+def multi_dil(im,num):
+    for i in range(num):
+        im = dilation(im)
+    return im
+
+def multi_ero(im,num):
+    for i in range(num):
+        im = erosion(im)
+    return im
 
 if __name__ == "__main__":
     
     # Load data
-    imgdata = np.load('air.npy')                                      # Input end wavelength (nm)
+    positions = np.loadtxt('data/pos.csv')
+    imgdata = np.load('data/water.npy')                                      
     n_frames = np.shape(imgdata)[2]
-    print(n_frames)
-    # Visualize
+    intensities = np.zeros(n_frames, dtype=float)
 
-    fig, (ax1) = plt.subplots(1, 1, figsize=(8, 8))
-    ax = plt.gca()
-    im = ax1.imshow(imgdata[:,:,90], cmap='viridis',aspect='equal')
-    plt.title('Image')
-    plt.show()
+    for frame in range(n_frames):
+        # background = np.mean(restoration.rolling_ball(imgdata[:,:,frame]))
+        background = 5
+
+        image = imgdata[:,:,frame].astype(float)
+        img_masked, thresh = doSomething(image)
+
+
+        print('Pos = ', np.round(positions[frame], 2), ' , Sum = ', np.sum(img_masked[img_masked>background].compressed()))
+        intensities[frame] = np.sum(img_masked[img_masked>background])
+        # print(img_masked[img_masked>10].compressed())
+
+    data = np.column_stack((np.round(positions, 2), intensities))
+    df = pd.DataFrame({'Stage': data[:, 0], 'Intensity': data[:, 1]})
+    file_name = 'data/09-13-2024-water-intensities_0.csv'
+    df.to_csv(file_name, index=False)
+
+
+
 
 
