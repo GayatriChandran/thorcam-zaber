@@ -16,7 +16,7 @@ import time
 import sys
 import tifffile as tf
 
-progress_bar = "###\n"
+progress_bar = "####\n"
     
 
 def initalize_stage(stage):
@@ -31,7 +31,7 @@ def initalize_stage(stage):
 
 def initialize_camera(cam_obj):
     
-    cam_obj.exposure_time_us = 10000  # set exposure to 11 ms
+    cam_obj.exposure_time_us = 100000  # set exposure to 11 ms
     cam_obj.frames_per_trigger_zero_for_unlimited = 0  # start camera in continuous mode
     cam_obj.image_poll_timeout_ms = 1000  # 1 second polling timeout
 
@@ -52,11 +52,11 @@ if __name__ == "__main__":
     
     # Stage positions to sweep through
     start_pos = 2.20                                     # Input start wavelength (nm) for sweep
-    end_pos = 7.00                                       # Input end wavelength (nm)
+    end_pos = 7.6                                       # Input end wavelength (nm)
 
     translation = np.arange(start_pos,end_pos,0.05)
     N = np.size(translation)                              # Number of stage positions
-    np.savetxt("pos.csv", translation,delimiter = ",")
+    # np.savetxt("pos-01.csv", translation,delimiter = ",")
     # Initialize the stage and camera
 
     with TLCameraSDK() as sdk:
@@ -118,7 +118,7 @@ if __name__ == "__main__":
                     time.sleep(0.2)
                     print('Measured ! \n')
 
-                np.save('water.npy', nd_image_array)
+                np.save('water-09-14-2024-10.npy', nd_image_array)
         
         
         # connection.close()

@@ -33,13 +33,13 @@ def visualize(img, mask):
 def doSomething(img):
     threshold1 = threshold_otsu(img)
     print('Otsu threshold : ', threshold1)
-    thresh = 45
+    thresh = 0.004
     binary = img > thresh
     dil_mask = multi_dil(binary,2)
     ero_mask = multi_ero(dil_mask,1)
     opened = opening(ero_mask)
     img_masked = np.ma.masked_array(img, ~opened)
-    # visualize(img, img_masked)
+    # visualize(img, binary)
     return img_masked, thresh
 
 def doSomethingElse(img):
@@ -102,26 +102,30 @@ def multi_ero(im,num):
 if __name__ == "__main__":
     
     # Load data
-    positions = np.loadtxt('data/pos.csv')
-    imgdata = np.load('data/water.npy')                                      
+    positions = np.loadtxt('data/09-14-2024/pos-01.csv')
+    imgdata = np.load('09-14-2024/')                                      
     n_frames = np.shape(imgdata)[2]
     intensities = np.zeros(n_frames, dtype=float)
 
     for frame in range(n_frames):
         # background = np.mean(restoration.rolling_ball(imgdata[:,:,frame]))
-        background = 5
+        background = 0.001
 
-        image = imgdata[:,:,frame].astype(float)
+        image = ski.util.img_as_float(imgdata[:,:,frame]/1023.00)
+        # print('Original max : ', np.max(imgdata[:,:,frame]))
+        # print('Original min : ', np.min(imgdata[:,:,frame]))
+        # print('Converted max : ', np.max(image))
+        # print('Converted min : ', np.min(image))
         img_masked, thresh = doSomething(image)
 
 
         print('Pos = ', np.round(positions[frame], 2), ' , Sum = ', np.sum(img_masked[img_masked>background].compressed()))
         intensities[frame] = np.sum(img_masked[img_masked>background])
-        # print(img_masked[img_masked>10].compressed())
+        # print(img_masked[img_masked>background].compressed())
 
     data = np.column_stack((np.round(positions, 2), intensities))
     df = pd.DataFrame({'Stage': data[:, 0], 'Intensity': data[:, 1]})
-    file_name = 'data/09-13-2024-water-intensities_0.csv'
+    file_name = 'data/09-14-2024-air-intensities_10.csv'
     df.to_csv(file_name, index=False)
 
 

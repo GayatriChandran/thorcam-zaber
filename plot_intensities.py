@@ -11,7 +11,7 @@ import pandas as pd
 
 if __name__ == "__main__":
 
-    file_name = 'data/09-13-2024-water-intensities_0.csv'                                   # Input file name
+    file_name = 'data/09-14-2024-air-intensities_10.csv'                                   # Input file name
 
     df = pd.read_csv(file_name)
 
