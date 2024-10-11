@@ -19,6 +19,8 @@ from skimage.segmentation import watershed
 import skimage as ski
 from skimage.morphology import erosion, dilation, opening, closing
 from skimage import data, restoration, util
+from scipy.ndimage import maximum_filter
+from skimage.draw import disk
 
 def visualize(img, mask):
     fig, ax = plt.subplots(ncols=2, figsize=(10, 5))
@@ -30,44 +32,37 @@ def visualize(img, mask):
     ax[1].set_axis_off()
     plt.show()
 
-def doSomething(img):
-    threshold1 = threshold_otsu(img)
-    print('Otsu threshold : ', threshold1)
-    thresh = 0.004
-    binary = img > thresh
-    dil_mask = multi_dil(binary,2)
-    ero_mask = multi_ero(dil_mask,1)
-    opened = opening(ero_mask)
-    img_masked = np.ma.masked_array(img, ~opened)
-    # visualize(img, binary)
-    return img_masked, thresh
+def doSomething(img, coordinates):
+    # print('Found it !')
+    # threshold1 = threshold_otsu(img)
+    # print('Otsu threshold : ', threshold1)
+    # thresh = 0.004
+    # Define the ROI radius
+    roi_radius = 20
+    mask = np.zeros_like(image, dtype=bool)
+    rr, cc = disk(coordinates[0], roi_radius)
+    mask[rr, cc] = True
+
+    # Extract the ROI from the image
+    binary = img[mask]
+
+    # binary = img > thresh
+    # dil_mask = multi_dil(binary,2)
+    # ero_mask = multi_ero(dil_mask,1)
+    # opened = opening(ero_mask)
+    # img_masked = np.ma.masked_array(img, ~binary)
+    # visualize(img, mask)
+    return binary
 
 def doSomethingElse(img):
-    im = img
-    image_max = ndi.maximum_filter(im, size=10, mode='constant')
-    coordinates = peak_local_max(image_max, min_distance=50, threshold_abs = 30, num_peaks = 1)
-
-    # fig, axes = plt.subplots(1, 3, figsize=(8, 3), sharex=True, sharey=True)
-    # ax = axes.ravel()
-    # ax[0].imshow(im, cmap=plt.cm.gray)
-    # ax[0].axis('off')
-    # ax[0].set_title('Original')
-
-    # ax[1].imshow(image_max, cmap=plt.cm.gray)
-    # ax[1].axis('off')
-    # ax[1].set_title('Maximum filter')
-
-    # ax[2].imshow(im, cmap=plt.cm.gray)
-    # ax[2].autoscale(False)
-    # ax[2].plot(coordinates[:, 1], coordinates[:, 0], 'r.')
-    # ax[2].axis('off')
-    # ax[2].set_title('Peak local max')
-
-    # fig.tight_layout()
-
-    # plt.show()
-
-    doWatershed(img, coordinates)
+    print('Lost it !')
+    roi_radius = 20
+    mask = np.zeros_like(image, dtype=bool)
+    rr, cc = disk([500, 500], roi_radius)
+    mask[rr, cc] = True
+    binary = img[mask]
+    # visualize(img, mask)
+    return binary
 
 def doWatershed(img, seeds):
     
@@ -99,33 +94,48 @@ def multi_ero(im,num):
         im = erosion(im)
     return im
 
+def visualize_peaks(img,peaks):
+    fig, ax = plt.subplots(ncols=1, figsize=(5, 5))
+    ax.imshow(img)
+    ax.scatter(peaks[:,1], peaks[:,0],c='r')
+    ax.set_title('Image with detected peaks')
+    # ax.set_axis_off()
+    plt.show()
+
+def find_peaks_2d(data, min_distance=50):
+    """Finds 2D peaks in a given array."""
+    coordinates = peak_local_max(data, min_distance=min_distance, num_peaks=1, threshold_rel=0.5, exclude_border=(5,300))
+    return coordinates
+
+
 if __name__ == "__main__":
     
     # Load data
     positions = np.loadtxt('data/09-14-2024/pos-01.csv')
-    imgdata = np.load('09-14-2024/')                                      
+    imgdata = np.load('data/09-14-2024/water-09-14-2024-10.npy')                                      
     n_frames = np.shape(imgdata)[2]
     intensities = np.zeros(n_frames, dtype=float)
 
     for frame in range(n_frames):
-        # background = np.mean(restoration.rolling_ball(imgdata[:,:,frame]))
-        background = 0.001
+        
+        image = ski.util.img_as_float(imgdata[:,:,frame]/1022.00)
+        peaks = find_peaks_2d(image)
 
-        image = ski.util.img_as_float(imgdata[:,:,frame]/1023.00)
-        # print('Original max : ', np.max(imgdata[:,:,frame]))
-        # print('Original min : ', np.min(imgdata[:,:,frame]))
-        # print('Converted max : ', np.max(image))
-        # print('Converted min : ', np.min(image))
-        img_masked, thresh = doSomething(image)
+        background = np.median(image) + 3*np.std(image)
+        # threshold = 10*np.median(image)
+        if len(peaks)>0:
+            img_masked = doSomething(image, peaks)
+        else:
+            img_masked = doSomethingElse(image)
 
 
-        print('Pos = ', np.round(positions[frame], 2), ' , Sum = ', np.sum(img_masked[img_masked>background].compressed()))
+        print('Pos = ', np.round(positions[frame], 2), ' , Sum = ', np.sum(img_masked[img_masked>background]), ', Background = ', background)
         intensities[frame] = np.sum(img_masked[img_masked>background])
         # print(img_masked[img_masked>background].compressed())
 
     data = np.column_stack((np.round(positions, 2), intensities))
     df = pd.DataFrame({'Stage': data[:, 0], 'Intensity': data[:, 1]})
-    file_name = 'data/09-14-2024-air-intensities_10.csv'
+    file_name = 'data/09-14-2024/refl-water-09-14-2024-10.csv'
     df.to_csv(file_name, index=False)
 
 
