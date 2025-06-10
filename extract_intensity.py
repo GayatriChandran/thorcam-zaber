@@ -38,11 +38,11 @@ def doSomething(img, coordinates):
     # print('Otsu threshold : ', threshold1)
     # thresh = 0.004
     # Define the ROI radius
-    roi_radius = 20
-    mask = np.zeros_like(image, dtype=bool)
+    roi_radius = 50
+    mask = np.zeros_like(img, dtype=bool)
     rr, cc = disk(coordinates[0], roi_radius)
     mask[rr, cc] = True
-
+    # print(rr)
     # Extract the ROI from the image
     binary = img[mask]
 
@@ -104,38 +104,49 @@ def visualize_peaks(img,peaks):
 
 def find_peaks_2d(data, min_distance=50):
     """Finds 2D peaks in a given array."""
-    coordinates = peak_local_max(data, min_distance=min_distance, num_peaks=1, threshold_rel=0.5, exclude_border=(5,300))
+    coordinates = peak_local_max(data, min_distance=min_distance, num_peaks=1, threshold_rel=0.5, exclude_border=(5,10))
     return coordinates
 
 
 if __name__ == "__main__":
     
     # Load data
-    positions = np.loadtxt('data/09-14-2024/pos-01.csv')
-    imgdata = np.load('data/09-14-2024/water-09-14-2024-10.npy')                                      
+    positions = np.loadtxt('translation_array_2.csv')
+    imgdata = np.load('air-06-10-2025-p.npy')                                      
     n_frames = np.shape(imgdata)[2]
+    print(n_frames)
     intensities = np.zeros(n_frames, dtype=float)
+    # Calculate threshold (background) for all frames
+    thresholds = []
+    average_threshold = 0.09
 
-    for frame in range(n_frames):
+    block_size = 150  # Number of elements in each block (block size)
+    step_size = 8
+
+    for frame in range(75,80):
         
-        image = ski.util.img_as_float(imgdata[:,:,frame]/1022.00)
-        peaks = find_peaks_2d(image)
+        # Create a sliding window to catch just the focus spot and avoid stray reflections
+        start_index = 25 + (frame * step_size)
+        end_index = start_index + block_size
+        image = ski.util.img_as_float(imgdata[start_index:end_index,680:720,frame]/1022.00)
+        
+        # threshold = np.mean(image)
+        # thresholds.append(threshold)
 
-        background = np.median(image) + 3*np.std(image)
-        # threshold = 10*np.median(image)
-        if len(peaks)>0:
-            img_masked = doSomething(image, peaks)
-        else:
-            img_masked = doSomethingElse(image)
+        # Create a mask for values greater than the average threshold
+        mask = image > average_threshold
+        visualize(image, mask)
+         # Sum the values in the image where the mask is True
+        intensities[frame] = np.sum(image)
 
 
-        print('Pos = ', np.round(positions[frame], 2), ' , Sum = ', np.sum(img_masked[img_masked>background]), ', Background = ', background)
-        intensities[frame] = np.sum(img_masked[img_masked>background])
-        # print(img_masked[img_masked>background].compressed())
+    # Calculate the average threshold from all frames
+    # average_threshold = np.median(thresholds)
+    # print(f'Average Threshold: {average_threshold}')
 
     data = np.column_stack((np.round(positions, 2), intensities))
     df = pd.DataFrame({'Stage': data[:, 0], 'Intensity': data[:, 1]})
-    file_name = 'data/09-14-2024/refl-water-09-14-2024-10.csv'
+    file_name = 'air-06-10-2025-p-intensities.csv'
     df.to_csv(file_name, index=False)
 
 

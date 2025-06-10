@@ -31,7 +31,7 @@ def initalize_stage(stage):
 
 def initialize_camera(cam_obj):
     
-    cam_obj.exposure_time_us = 100000  # set exposure to 11 ms
+    cam_obj.exposure_time_us = 200000  # set exposure to 11 ms
     cam_obj.frames_per_trigger_zero_for_unlimited = 0  # start camera in continuous mode
     cam_obj.image_poll_timeout_ms = 1000  # 1 second polling timeout
 
@@ -51,8 +51,8 @@ except ImportError:
 if __name__ == "__main__":
     
     # Stage positions to sweep through
-    start_pos = 2.20                                     # Input start wavelength (nm) for sweep
-    end_pos = 7.6                                       # Input end wavelength (nm)
+    start_pos = 2.5                                     # Input start wavelength (nm) for sweep
+    end_pos = 7.5                                       # Input end wavelength (nm)
 
     translation = np.arange(start_pos,end_pos,0.05)
     N = np.size(translation)                              # Number of stage positions
@@ -118,7 +118,7 @@ if __name__ == "__main__":
                     time.sleep(0.2)
                     print('Measured ! \n')
 
-                np.save('water-09-14-2024-10.npy', nd_image_array)
+                np.save('air-06-10-2025-p.npy', nd_image_array)
         
         
         # connection.close()
