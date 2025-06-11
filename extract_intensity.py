@@ -118,12 +118,12 @@ if __name__ == "__main__":
     intensities = np.zeros(n_frames, dtype=float)
     # Calculate threshold (background) for all frames
     thresholds = []
-    average_threshold = 0.09
+    average_threshold = 0.05
 
-    block_size = 150  # Number of elements in each block (block size)
+    block_size = 200  # Number of elements in each block (block size)
     step_size = 8
 
-    for frame in range(75,80):
+    for frame in range(n_frames):
         
         # Create a sliding window to catch just the focus spot and avoid stray reflections
         start_index = 25 + (frame * step_size)
@@ -135,7 +135,7 @@ if __name__ == "__main__":
 
         # Create a mask for values greater than the average threshold
         mask = image > average_threshold
-        visualize(image, mask)
+        # visualize(image, mask)
          # Sum the values in the image where the mask is True
         intensities[frame] = np.sum(image)
 
