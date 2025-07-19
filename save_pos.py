@@ -22,7 +22,6 @@ output_filename = "translation_array_2.csv"
 # Save using the CSV writer
 with open(output_filename, mode='w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(["Wavelength (nm)"])  # Optional header
     for value in translation:
         writer.writerow([value])
 
