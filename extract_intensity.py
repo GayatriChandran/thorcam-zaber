@@ -111,8 +111,8 @@ def find_peaks_2d(data, min_distance=50):
 if __name__ == "__main__":
     
     # Load data
-    positions = np.loadtxt('translation_array_2.csv')
-    imgdata = np.load('air-06-10-2025-p.npy')                                      
+    positions = np.loadtxt('translation_array.csv')
+    imgdata = np.load('air-07-18-2025-hwp-2-qwp-4.npy')                                      
     n_frames = np.shape(imgdata)[2]
     print(n_frames)
     intensities = np.zeros(n_frames, dtype=float)
