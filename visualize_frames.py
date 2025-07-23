@@ -12,12 +12,18 @@ import matplotlib.pyplot as plt
 import skimage as ski
 
 def visualize(img, f, cropped):
-    fig, ax = plt.subplots(ncols=2,figsize=(8, 5))
+    data_1d = cropped.ravel() # or data_2d.flatten() or np.reshape(data_2d, -1)
+    # Plot the histogram
+    plt.hist(data_1d, bins=200, alpha=0.7)
+    plt.show()
+
+    fig, ax = plt.subplots(ncols=2,figsize=(5, 5))
     ax[0].imshow(img)
     ax[0].set_title('Frame # '+str(f))
     ax[1].imshow(cropped)
     ax[1].set_title('Cropped')
     plt.show()
+    
 
 if __name__ == "__main__":
     
@@ -27,7 +33,7 @@ if __name__ == "__main__":
     n_frames = np.shape(imgdata)[2]
     intensities = np.zeros(n_frames, dtype=float)
     print('No. of frames : ', n_frames)
-    selected_frames = [10,25,50,75,80,98]
+    selected_frames = [50,75]
     for frame in selected_frames:
-        cropped_image = ski.util.img_as_float(imgdata[:,770:985,frame]/1022.00)
+        cropped_image = ski.util.img_as_float(imgdata[:,770:985,frame])
         visualize(imgdata[:,:,frame]/1022.00, frame, cropped_image)
