@@ -31,9 +31,15 @@ def initalize_stage(stage):
 
 def initialize_camera(cam_obj):
     
-    cam_obj.exposure_time_us = 200000  # set exposure to 11 ms
+    cam_obj.exposure_time_us = 150000  # set exposure to 11 ms
     cam_obj.frames_per_trigger_zero_for_unlimited = 0  # start camera in continuous mode
     cam_obj.image_poll_timeout_ms = 1000  # 1 second polling timeout
+    if cam_obj.gain_range.max > 0:
+        db_gain = 2.0
+        gain_index = cam_obj.convert_decibels_to_gain(db_gain)
+        cam_obj.gain = gain_index
+        print(f"Set camera gain to {cam_obj.convert_gain_to_decibels(cam_obj.gain)}")
+
 
 
 def get_frame(cam):
@@ -51,8 +57,8 @@ except ImportError:
 if __name__ == "__main__":
     
     # Stage positions to sweep through
-    start_pos = 2.5                                     # Input start wavelength (nm) for sweep
-    end_pos = 7.5                                       # Input end wavelength (nm)
+    start_pos = 2.8                                     # Input start wavelength (nm) for sweep
+    end_pos = 7.2                                       # Input end wavelength (nm)
 
     translation = np.arange(start_pos,end_pos,0.05)
     N = np.size(translation)                              # Number of stage positions
@@ -118,7 +124,7 @@ if __name__ == "__main__":
                     time.sleep(0.2)
                     print('Measured ! \n')
 
-                np.save('air-06-10-2025-p.npy', nd_image_array)
+                np.save('air-07-21-2025-hwp-48.npy', nd_image_array)
         
         
         # connection.close()
