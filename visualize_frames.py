@@ -20,10 +20,10 @@ from skimage.transform import AffineTransform, warp
 
 
 def visualize(img, f, cropped):
-    # data_1d = cropped.ravel() # or data_2d.flatten() or np.reshape(data_2d, -1)
-    # # Plot the histogram
-    # plt.hist(data_1d, bins=200, alpha=0.7)
-    # plt.show()
+
+    data_1d = cropped.ravel() # or data_2d.flatten() or np.reshape(data_2d, -1)
+    plt.hist(data_1d, bins=200, alpha=0.7) # Plot the histogram
+    plt.show()
 
     fig, ax = plt.subplots(ncols=2,figsize=(8, 8))
     ax[0].imshow(img)
@@ -37,11 +37,11 @@ if __name__ == "__main__":
     
     # Load data
     positions = np.loadtxt('translation_array.csv')
-    imgdata = np.load('air-07-21-2025-hwp-2.npy')                                      
+    imgdata = np.load('air-07-21-2025-hwp-48.npy')                                      
     n_frames = np.shape(imgdata)[2]
     intensities = np.zeros(n_frames, dtype=float)
-    print('No. of frames : ', n_frames)
-    selected_frames = [5,10,20,30,40,50,60,70,80,85]
+    # print('No. of frames : ', n_frames)
+    selected_frames = [48,50,53]
     # selected_frames = [5]
     #####
     # Define center and angle
@@ -55,8 +55,11 @@ if __name__ == "__main__":
     plt.close()
 
     # Step 2: Compute angle and center
-    print(pts)
+    print('Center : ', pts)
     (x,y) = pts[0]
+
+    # x = 818.85
+    # y = 403.91
     print(x,y)
     # print(center[0])
     angle = 10  # degrees
@@ -73,5 +76,5 @@ if __name__ == "__main__":
     for frame in selected_frames:
         # Crop axis-aligned rectangle around the center in rotated image
         
-        cropped_image = warp(img_as_float(imgdata[:, :, frame]), total_tform.inverse)
-        visualize(imgdata[:,:,frame]/1022.00, frame, cropped_image[0:900,750:900])
+        cropped_image = warp(imgdata[:, :, frame], total_tform.inverse)
+        visualize(imgdata[:,:,frame], frame, cropped_image[0:900,750:900])
