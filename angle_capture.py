@@ -124,7 +124,7 @@ if __name__ == "__main__":
                     time.sleep(0.2)
                     print('Measured ! \n')
 
-                np.save('air-07-21-2025-hwp-48.npy', nd_image_array)
+                np.save('air-08-01-2025-hwp-32.npy', nd_image_array)
         
         
         # connection.close()
